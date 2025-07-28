@@ -1,0 +1,42 @@
+---
+- name: Patch Ubuntu Server with Output
+  hosts: ubuntu_servers
+  become: yes
+  tasks:
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      register: update_cache_result
+
+    - name: Show result of apt cache update
+      debug:
+        var: update_cache_result
+
+    - name: Upgrade all packages to the latest version
+      apt:
+        upgrade: dist
+      register: upgrade_result
+
+    - name: Show result of package upgrade
+      debug:
+        var: upgrade_result
+
+    - name: Remove unused packages
+      apt:
+        autoremove: yes
+      register: autoremove_result
+
+    - name: Show result of autoremove
+      debug:
+        var: autoremove_result
+
+    - name: Clean up local repository of retrieved package files
+      apt:
+        autoclean: yes
+      register: autoclean_result
+
+    - name: Show result of autoclean
+      debug:
+        var: autoclean_result
