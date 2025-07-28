@@ -1,42 +1,43 @@
 ---
-- name: Patch Ubuntu Server with Output
+- name: Patch Ubuntu Server
   hosts: all
   become: yes
+  vars:
+    reboot_required_file: /var/run/reboot-required
+
   tasks:
-
     - name: Update apt cache
-      apt:
+      ansible.builtin.apt:
         update_cache: yes
-        cache_valid_time: 3600
-      register: update_cache_result
+      register: update_result
 
-    - name: Show result of apt cache update
-      debug:
-        var: update_cache_result
-
-    - name: Upgrade all packages to the latest version
-      apt:
+    - name: Upgrade all packages
+      ansible.builtin.apt:
         upgrade: dist
       register: upgrade_result
 
-    - name: Show result of package upgrade
-      debug:
+    - name: Check if reboot is required
+      ansible.builtin.stat:
+        path: "{{ reboot_required_file }}"
+      register: reboot_required
+
+    - name: Reboot the server if required
+      ansible.builtin.reboot:
+        msg: "Reboot initiated by Ansible after patching"
+        connect_timeout: 5
+        reboot_timeout: 600
+        pre_reboot_delay: 0
+        post_reboot_delay: 30
+      when: reboot_required.stat.exists
+
+    - name: Show update result
+      ansible.builtin.debug:
+        var: update_result
+
+    - name: Show upgrade result
+      ansible.builtin.debug:
         var: upgrade_result
 
-    - name: Remove unused packages
-      apt:
-        autoremove: yes
-      register: autoremove_result
-
-    - name: Show result of autoremove
-      debug:
-        var: autoremove_result
-
-    - name: Clean up local repository of retrieved package files
-      apt:
-        autoclean: yes
-      register: autoclean_result
-
-    - name: Show result of autoclean
-      debug:
-        var: autoclean_result
+    - name: Show reboot status
+      ansible.builtin.debug:
+        msg: "Reboot was {{ 'required and performed' if reboot_required.stat.exists else 'not required' }}"
