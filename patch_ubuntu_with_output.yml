@@ -6,6 +6,10 @@
     reboot_required_file: /var/run/reboot-required
   
   tasks:
+    - name: Install python3 and python3-apt
+      raw: |
+        apt-get update
+        apt-get install -y python3 python3-apt
 
     - name: Upgrade all packages
       ansible.builtin.apt:
