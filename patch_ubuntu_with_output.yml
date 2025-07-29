@@ -5,17 +5,7 @@
   vars:
     reboot_required_file: /var/run/reboot-required
   
-  pre_tasks:
-    - name: Ensure python3-apt is installed
-      ansible.builtin.raw: sudo apt-get install -y python3-apt
-      register: python3_apt_install
-      changed_when: "'Setting up python3-apt' in python3_apt_install.stdout"
-
   tasks:
-    - name: Update apt cache
-      ansible.builtin.apt:
-        update_cache: yes
-      register: update_result
 
     - name: Upgrade all packages
       ansible.builtin.apt:
