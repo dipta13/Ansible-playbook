@@ -1,6 +1,6 @@
 ---
 - name: Bootstrap and Patch Ubuntu Server
-  hosts: ubuntu_servers
+  hosts: all
   become: yes
   gather_facts: no
   vars:
