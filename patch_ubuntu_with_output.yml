@@ -1,15 +1,30 @@
 ---
-- name: Patch Ubuntu Server
-  hosts: all
+- name: Bootstrap and Patch Ubuntu Server
+  hosts: ubuntu_servers
   become: yes
+  gather_facts: no
   vars:
     reboot_required_file: /var/run/reboot-required
-  
+    ansible_python_interpreter: /usr/bin/python3
+
   tasks:
-    - name: Install python3 and python3-apt
+    - name: Bootstrap python3 and python3-apt
       raw: |
         apt-get update
         apt-get install -y python3 python3-apt
+      register: bootstrap_output
+
+    - name: Wait for Python to be available
+      wait_for_connection:
+        timeout: 60
+
+    - name: Gather facts after Python is ready
+      setup:
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+      register: update_result
 
     - name: Upgrade all packages
       ansible.builtin.apt:
@@ -29,6 +44,10 @@
         pre_reboot_delay: 0
         post_reboot_delay: 30
       when: reboot_required.stat.exists
+
+    - name: Show bootstrap output
+      ansible.builtin.debug:
+        var: bootstrap_output.stdout_lines
 
     - name: Show update result
       ansible.builtin.debug:
