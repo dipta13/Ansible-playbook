@@ -10,8 +10,8 @@
   tasks:
     - name: Bootstrap python3 and python3-apt
       raw: |
-        apt-get update
-        apt-get install -y python3 python3-apt
+        sudo apt-get update
+        sudo apt-get install -y python3 python3-apt
       register: bootstrap_output
 
     - name: Wait for Python to be available
