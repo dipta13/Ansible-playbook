@@ -1,0 +1,30 @@
+---
+- name: Scan Unix systems for vulnerabilities using Lynis
+  hosts: unix_servers
+  become: yes
+  tasks:
+
+    - name: Install Lynis
+      apt:
+        name: lynis
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Install Lynis (RHEL/CentOS)
+      yum:
+        name: lynis
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Run Lynis audit
+      command: lynis audit system
+      register: lynis_output
+
+    - name: Save Lynis report
+      copy:
+        content: "{{ lynis_output.stdout }}"
+        dest: "/var/log/lynis_scan_{{ inventory_hostname }}.log"
+
+    - name: Display summary
+      debug:
+        msg: "{{ lynis_output.stdout_lines | select('search', 'Hardening index') | list }}"
