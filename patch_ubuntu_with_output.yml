@@ -5,7 +5,7 @@
   tasks:
 
     - name: Update package list
-      shell: apt update -y
+      shell: sudo apt update -y
       register: update_output
       ignore_errors: yes
 
@@ -14,7 +14,7 @@
         msg: "{{ update_output.stdout_lines | select('search', 'Hit') | list }}"
 
     - name: Upgrade packages
-      shell: apt upgrade -y
+      shell: sudo apt upgrade -y
       register: upgrade_output
       ignore_errors: yes
 
@@ -23,7 +23,7 @@
         msg: "{{ upgrade_output.stdout_lines | select('search', 'upgraded') | list + upgrade_output.stdout_lines | select('search', 'newly installed') | list }}"
 
     - name: Dist-upgrade (optional)
-      shell: apt dist-upgrade -y
+      shell: sudo apt dist-upgrade -y
       register: dist_upgrade_output
       ignore_errors: yes
     - name: Show dist-upgrade changes
@@ -31,7 +31,7 @@
         msg: "{{ dist_upgrade_output.stdout_lines | select('search', 'upgraded') | list + dist_upgrade_output.stdout_lines | select('search', 'newly installed') | list }}"
 
     - name: Autoremove unused packages
-      shell: apt autoremove -y
+      shell: sudo apt autoremove -y
       register: autoremove_output
       ignore_errors: yes
 
