@@ -1,62 +1,54 @@
 ---
-- name: Bootstrap and Patch Ubuntu Server
+- name: Patch Ubuntu servers using apt command with auto reboot
   hosts: all
   become: yes
-  gather_facts: no
-  vars:
-    reboot_required_file: /var/run/reboot-required
-    ansible_python_interpreter: /usr/bin/python3
-
   tasks:
-    - name: Bootstrap python3 and python3-apt
-      raw: |
-        sudo apt-get update
-        sudo apt-get install -y python3 python3-apt
-      register: bootstrap_output
 
-    - name: Wait for Python to be available
-      wait_for_connection:
-        timeout: 60
+    - name: Update package list
+      shell: apt update -y
+      register: update_output
+      ignore_errors: yes
 
-    - name: Gather facts after Python is ready
-      setup:
+    - name: Show updated package sources
+      debug:
+        msg: "{{ update_output.stdout_lines | select('search', 'Hit') | list }}"
 
-    - name: Update apt cache
-      ansible.builtin.apt:
-        update_cache: yes
-      register: update_result
+    - name: Upgrade packages
+      shell: apt upgrade -y
+      register: upgrade_output
+      ignore_errors: yes
 
-    - name: Upgrade all packages
-      ansible.builtin.apt:
-        upgrade: dist
-      register: upgrade_result
+    - name: Show upgraded packages
+      debug:
+        msg: "{{ upgrade_output.stdout_lines | select('search', 'upgraded') | list + upgrade_output.stdout_lines | select('search', 'newly installed') | list }}"
+
+    - name: Dist-upgrade (optional)
+      shell: apt dist-upgrade -y
+      register: dist_upgrade_output
+      ignore_errors: yes
+    - name: Show dist-upgrade changes
+      debug:
+        msg: "{{ dist_upgrade_output.stdout_lines | select('search', 'upgraded') | list + dist_upgrade_output.stdout_lines | select('search', 'newly installed') | list }}"
+
+    - name: Autoremove unused packages
+      shell: apt autoremove -y
+      register: autoremove_output
+      ignore_errors: yes
+
+    - name: Show autoremove summary
+      debug:
+        msg: "{{ autoremove_output.stdout_lines | select('search', 'removed') | list }}"
 
     - name: Check if reboot is required
-      ansible.builtin.stat:
-        path: "{{ reboot_required_file }}"
+      stat:
+        path: /var/run/reboot-required
       register: reboot_required
 
-    - name: Reboot the server if required
-      ansible.builtin.reboot:
+    - name: Reboot the server if needed
+      reboot:
         msg: "Reboot initiated by Ansible after patching"
         connect_timeout: 5
         reboot_timeout: 600
-        pre_reboot_delay: 0
+        pre_reboot_delay: 10
         post_reboot_delay: 30
       when: reboot_required.stat.exists
-
-    - name: Show bootstrap output
-      ansible.builtin.debug:
-        var: bootstrap_output.stdout_lines
-
-    - name: Show update result
-      ansible.builtin.debug:
-        var: update_result
-
-    - name: Show upgrade result
-      ansible.builtin.debug:
-        var: upgrade_result
-
-    - name: Show reboot status
-      ansible.builtin.debug:
-        msg: "Reboot was {{ 'required and performed' if reboot_required.stat.exists else 'not required' }}"
