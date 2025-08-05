@@ -9,7 +9,7 @@
 
     - name: Update all packages except Java
       ansible.builtin.shell: |
-        yum update -y --exclude=java* --exclude=openjdk* | tee {{ patch_log }}
+        yum update -y --exclude=java* --exclude=openjdk* --nobest | tee {{ patch_log }}
 
     - name: Check if a reboot is required
       ansible.builtin.stat:
