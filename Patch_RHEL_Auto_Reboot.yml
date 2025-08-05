@@ -6,10 +6,11 @@
     patch_log: /var/log/ansible-patch.log
 
   tasks:
-
-    - name: Update all packages except Java
+    - name: Update all packages except Java and log output
       ansible.builtin.shell: |
-        yum update -y --exclude=java* --exclude=openjdk* --nobest | tee {{ patch_log }}
+        script -q -c "yum update -y --exclude=java* --exclude=openjdk* --nobest" {{ patch_log }}
+      args:
+        timeout: 600
 
     - name: Check if a reboot is required
       ansible.builtin.stat:
