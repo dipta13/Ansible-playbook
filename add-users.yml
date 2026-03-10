@@ -9,7 +9,7 @@
 
   vars:
     username: "svctenabletmli"
-    plain_password: "YourPassword123!"   # <-- your plaintext password
+    plain_password: "P@ssw0rdscanning"   # <-- your plaintext password
     hash_salt: "FixedSalt123"            # <-- keep constant for idempotency
 
   tasks:
