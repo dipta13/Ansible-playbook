@@ -3,9 +3,8 @@
   hosts: all
   become: yes
   become_method: sudo
-  become_user: root        # <-- This is the correct equivalent of "sudo su -"
+  become_user: root        # <-- Equivalent of "sudo su -"
   gather_facts: yes
-
 
   vars:
     username: "svctenabletmli"
@@ -31,3 +30,20 @@
         update_password: on_create
         groups: "{{ admin_group }}"
         append: yes
+
+    # --- Add sudoers rule: EXACTLY "ALL=(ALL) NOPASSWD: ALL"
+    - name: Add user to sudoers with NOPASSWD
+      ansible.builtin.copy:
+        dest: "/etc/sudoers.d/{{ username }}"
+        content: |
+          {{ username }} ALL=(ALL) NOPASSWD: ALL
+        owner: root
+        group: root
+        mode: "0440"
+        validate: "visudo -cf %s"
+
+    # --- Make the password never expire for this user
+    - name: Ensure the password never expires
+      ansible.builtin.user:
+        name: "{{ username }}"
+        password_expire_max: -1   # -1 => never expires (same as `chage -M -1`)
