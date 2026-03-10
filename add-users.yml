@@ -64,4 +64,3 @@
         path: "/etc/sudoers.d/{{ username }}"
         state: absent
       when: not sudo_nopasswd | bool
-``
