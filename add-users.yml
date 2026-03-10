@@ -2,7 +2,10 @@
 - name: Minimal user creation for Ubuntu & RHEL with plaintext password
   hosts: all
   become: yes
+  become_method: sudo
+  become_user: root        # <-- This is the correct equivalent of "sudo su -"
   gather_facts: yes
+
 
   vars:
     username: "svctenabletmli"
