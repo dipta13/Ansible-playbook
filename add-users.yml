@@ -1,29 +1,25 @@
 ---
-- name: Add user with sudo privileges (Ubuntu + RHEL)
+- name: Minimal user creation for Ubuntu & RHEL with plaintext password
   hosts: all
   become: yes
+  gather_facts: yes
 
   vars:
     username: "svctenabletmli"
-    plain_password: "P@ssw0rdscanning"   # <-- PUT YOUR PLAINTEXT PASSWORD
-    hash_salt: "FixedSalt123"            # <-- Keep this constant for idempotency
+    plain_password: "P@ssw0rdscanning"     # <-- your plaintext password
+    hash_salt: "FixedSalt123"              # <-- keep constant!
 
   tasks:
-    - name: Detect correct sudo group (Ubuntu=sudo, RHEL=wheel)
+    - name: Select correct admin group (Ubuntu=sudo, RHEL=wheel)
       set_fact:
-        sudo_group: "{{ 'wheel' if ansible_os_family == 'RedHat' else 'sudo' }}"
+        admin_group: "{{ 'wheel' if ansible_facts.os_family == 'RedHat' else 'sudo' }}"
 
-    - name: Ensure sudo group exists
-      group:
-        name: "{{ sudo_group }}"
-        state: present
-
-    - name: Create user with sudo privilege and plaintext password
+    - name: Create user with sudo privileges
       user:
         name: "{{ username }}"
         create_home: yes
         shell: /bin/bash
         password: "{{ plain_password | password_hash('sha512', hash_salt) }}"
         update_password: on_create
-        groups: "{{ sudo_group }}"
+        groups: "{{ admin_group }}"
         append: yes
