@@ -6,16 +6,21 @@
 
   vars:
     username: "svctenabletmli"
-    plain_password: "P@ssw0rdscanning"     # <-- your plaintext password
-    hash_salt: "FixedSalt123"              # <-- keep constant!
+    plain_password: "YourPassword123!"   # <-- your plaintext password
+    hash_salt: "FixedSalt123"            # <-- keep constant for idempotency
 
   tasks:
     - name: Select correct admin group (Ubuntu=sudo, RHEL=wheel)
-      set_fact:
+      ansible.builtin.set_fact:
         admin_group: "{{ 'wheel' if ansible_facts.os_family == 'RedHat' else 'sudo' }}"
 
-    - name: Create user with sudo privileges
-      user:
+    - name: Ensure admin group exists (prevents failure if missing)
+      ansible.builtin.group:
+        name: "{{ admin_group }}"
+        state: present
+
+    - name: Create user and add to admin group
+      ansible.builtin.user:
         name: "{{ username }}"
         create_home: yes
         shell: /bin/bash
