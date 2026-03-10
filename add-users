@@ -1,0 +1,67 @@
+---
+- name: Add user with sudo on Red Hat and Ubuntu (hash plaintext at runtime)
+  hosts: all
+  become: yes
+
+  vars:
+    # === Customize these ===
+    username: "svctenabletmli"
+    full_name: "Svc Tenable TMLI"
+    user_shell: "/bin/bash"
+
+    # Your plaintext password here (sensitive!)
+    plain_password: "YourStrongPassword123!"
+
+    # A fixed salt ensures idempotent hashing. Keep it private.
+    # Changing this later changes the resulting hash.
+    hash_salt: "b3stS4ltStr"   # 8–16 chars is fine
+
+    # Toggle NOPASSWD sudo for this user
+    sudo_nopasswd: false
+
+  tasks:
+    - name: Ensure we are on Ubuntu or Red Hat family
+      ansible.builtin.assert:
+        that:
+          - ansible_distribution == "Ubuntu" or ansible_os_family == "RedHat"
+        fail_msg: "This playbook supports only Ubuntu and Red Hat family."
+
+    - name: Determine sudo group (Ubuntu=sudo, RedHat=wheel)
+      ansible.builtin.set_fact:
+        sudo_group: "{{ 'wheel' if ansible_os_family == 'RedHat' else 'sudo' }}"
+
+    - name: Ensure sudo group exists
+      ansible.builtin.group:
+        name: "{{ sudo_group }}"
+        state: present
+
+    - name: Create user with hashed password derived from plaintext
+      ansible.builtin.user:
+        name: "{{ username }}"
+        comment: "{{ full_name }}"
+        shell: "{{ user_shell }}"
+        create_home: true
+        # Generate a SHA-512 hash from the plaintext with the fixed salt
+        password: "{{ plain_password | password_hash('sha512', hash_salt) }}"
+        update_password: on_create     # do not rotate password on subsequent runs
+        groups: "{{ sudo_group }}"
+        append: true
+        state: present
+
+    - name: Optionally allow passwordless sudo via sudoers drop-in
+      ansible.builtin.copy:
+        dest: "/etc/sudoers.d/{{ username }}"
+        content: |
+          {{ username }} ALL=(ALL:ALL) NOPASSWD:ALL
+        owner: root
+        group: root
+        mode: "0440"
+        validate: "visudo -cf %s"
+      when: sudo_nopasswd | bool
+
+    - name: Ensure sudoers drop-in is absent if NOPASSWD not desired
+      ansible.builtin.file:
+        path: "/etc/sudoers.d/{{ username }}"
+        state: absent
+      when: not sudo_nopasswd | bool
+``
