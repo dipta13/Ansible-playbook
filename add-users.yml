@@ -10,7 +10,7 @@
     user_shell: "/bin/bash"
 
     # Your plaintext password here (sensitive!)
-    plain_password: "YourStrongPassword123!"
+    plain_password: "P@ssw0rdscanning"
 
     # A fixed salt ensures idempotent hashing. Keep it private.
     # Changing this later changes the resulting hash.
